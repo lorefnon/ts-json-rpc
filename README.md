@@ -67,13 +67,17 @@ On the client-side, import the shared type and create a typed `rpcClient` with i
 ```ts
 // client/index.ts
 
-import { rpcClient } from "ts-rpc";
+import { rpcClient, HttpPostTransport } from "ts-rpc";
 
 // Import the type (not the implementation!)
 import type { MyService } from "../server/myService";
 
 // Create a typed client:
-const client = rpcClient<MyService>("http://localhost:3000/api");
+const client = rpcClient<MyService>({
+  transport: new HttpPostTransport({
+    url: "http://localhost:3000/api"
+  })
+});
 
 // Call a remote method:
 console.log(await client.hello("world"));
