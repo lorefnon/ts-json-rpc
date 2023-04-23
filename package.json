@@ -1,5 +1,5 @@
 {
-  "name": "typed-rpc",
+  "name": "ts-rpc",
   "version": "3.0.0",
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
   "keywords": [
@@ -20,8 +20,11 @@
     "test": "with-server tap lib/test/client.js",
     "prepublish": "npm run build"
   },
-  "author": "Felix Gnass <fgnass@gmail.com>",
-  "repository": "fgnass/typed-rpc",
+  "contributors": [
+    "Felix Gnass <fgnass@gmail.com>",
+    "Lorefnon <lorefnon@tutanota.com> (https://lorefnon.me)"
+  ],
+  "repository": "lorefnon/ts-rpc",
   "license": "MIT",
   "devDependencies": {
     "@types/express": "^4.17.11",
