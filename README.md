@@ -19,11 +19,7 @@ that comes with the following features and non-features:
 
 ## Philosophy
 
-The philosophy of `ts-rpc` is to strictly focus on the core functionality and keep things as [simple](#basic-usage) as possible. The whole library basically consists of two files, one for the client and one for the server.
-
-You won't find any unnecessarily complex concepts like middlewares, adapters, resolvers, transformers, queries or mutations.
-
-(If you want queries and mutations though, [we've got you covered](#react-hooks).)
+The philosophy of `ts-rpc` is to focus on the core functionality and keep things as [simple](#basic-usage) as possible.
 
 And instead of having adapters for all the different servers, meta frameworks or edge runtimes, we provide a generic package that is request/response agnostic and leave the wiring [up to the user](#support-for-other-runtimes).
 
