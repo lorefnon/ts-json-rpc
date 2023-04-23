@@ -1,6 +1,6 @@
-# ts-rpc
+# ts-json-rpc
 
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/ts-rpc)
+![npm bundle size](https://img.shields.io/bundlephobia/minzip/@lorefnon/ts-json-rpc)
 
 Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeScript projects
 that comes with the following features and non-features:
@@ -11,17 +11,8 @@ that comes with the following features and non-features:
 - 🪶 Tiny footprint (< 1kB)
 - 🌎 Support for Deno and edge runtimes
 - 🚫 No code generation step
-- 🚫 No dependencies
 - 🚫 No batch requests
-- 🚫 No transports other than HTTP(S)
 - 🚫 No runtime type-checking
-- 🚫 No IE11 support
-
-## Philosophy
-
-The philosophy of `ts-rpc` is to focus on the core functionality and keep things as [simple](#basic-usage) as possible.
-
-And instead of having adapters for all the different servers, meta frameworks or edge runtimes, we provide a generic package that is request/response agnostic and leave the wiring [up to the user](#support-for-other-runtimes).
 
 ## Basic Usage
 
@@ -49,7 +40,7 @@ Create a server with a route to handle the API requests:
 // server/index.ts
 
 import express from "express";
-import { rpcHandler } from "ts-rpc/express";
+import { rpcHandler } from "@lorefnon/ts-json-rpc/express";
 import { myService } from "./myService.ts";
 
 const app = express();
@@ -59,7 +50,7 @@ app.listen(3000);
 ```
 
 > **Note**
-> You can also use ts-rpc in servers other than Express.
+> You can also use @lorefnon/ts-json-rpc in servers other than Express.
 > Check out to docs below for [examples](#support-for-other-runtimes).
 
 On the client-side, import the shared type and create a typed `rpcClient` with it:
@@ -67,7 +58,7 @@ On the client-side, import the shared type and create a typed `rpcClient` with i
 ```ts
 // client/index.ts
 
-import { rpcClient, HttpPostTransport } from "ts-rpc";
+import { rpcClient, HttpPostTransport } from "@lorefnon/ts-json-rpc";
 
 // Import the type (not the implementation!)
 import type { MyService } from "../server/myService";
@@ -89,7 +80,7 @@ That's all it takes to create a type-safe JSON-RPC API. 🎉
 
 You can play with a live example over at StackBlitz:
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/ts-rpc-express?file=client%2Fmain.ts)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/@lorefnon/ts-json-rpc-express?file=client%2Fmain.ts)
 
 # Advanced Usage
 
@@ -147,14 +138,14 @@ To include credentials in cross-origin requests, pass `credentials: 'include'` a
 
 ## Support for other runtimes
 
-The generic `ts-rpc/server` package can be used with any server framework or (edge-) runtime.
+The generic `@lorefnon/ts-json-rpc/server` package can be used with any server framework or (edge-) runtime.
 
 ### Fastify
 
-With [Fastify](https://www.fastify.io/), you would use `ts-rpc` like this:
+With [Fastify](https://www.fastify.io/), you would use `@lorefnon/ts-json-rpc` like this:
 
 ```ts
-import { handleRpc, isJsonRpcRequest } from "ts-rpc/server";
+import { handleRpc, isJsonRpcRequest } from "@lorefnon/ts-json-rpc/server";
 
 fastify.post("/api", async (req, reply) => {
   if (isJsonRpcRequest(req.body)) {
@@ -164,48 +155,10 @@ fastify.post("/api", async (req, reply) => {
 });
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/ts-rpc-fastify?file=server%2Findex.ts)
-
-### Deno
-
-🦕 You can also use `ts-rpc` in Deno like in this [example](https://github.com/fgnass/ts-rpc-deno-example).
-
-> **Note**
-> This package is also published under https://deno.land/x/typed_rpc
-
-### Next.js
-
-Here's an example that uses `ts-rpc` in a Next.js project:
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/ts-rpc-nextjs?file=pages%2Findex.tsx)
-
-### Clodflare Workers
-
-In a [Cloudflare Worker](https://workers.cloudflare.com/) you can use `ts-rpc` like this:
-
-```ts
-import { handleRpc } from "ts-rpc/server";
-import { myService } from "./myService";
-
-export default {
-  async fetch(request: Request) {
-    const json = await request.json();
-    const data = await handleRpc(json, service);
-    return event.respondWith(
-      new Response(JSON.stringify(data), {
-        headers: {
-          "content-type": "application/json;charset=UTF-8",
-        },
-      })
-    );
-  },
-};
-```
-
 ## Runtime type checking
 
 > **Warning**
-> Keep in mind that `ts-rpc` does not perform any runtime type checks.
+> Keep in mind that `@lorefnon/ts-json-rpc` does not perform any runtime type checks.
 
 This is usually not an issue, as long as your service can handle this gracefully.
 If you want, you can use a library like [io-ts](https://gcanti.github.io/io-ts/)
@@ -214,7 +167,7 @@ arguments you receive match the expected type.
 
 ## React hooks
 
-While `ts-rpc` itself does not provide any built-in UI framework integrations,
+While `@lorefnon/ts-json-rpc` itself does not provide any built-in UI framework integrations,
 you can pair it with [react-api-query](https://www.npmjs.com/package/react-api-query),
 a thin wrapper around _TanStack Query_. A type-safe match made in heaven. 💕
 
