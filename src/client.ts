@@ -24,7 +24,7 @@ export interface RpcOptions<TMeta = undefined> {
   onError?: (meta?: TMeta, error?: unknown) => void | Promise<void>
 }
 
-type HttpPostTransportParams = {
+export interface HttpPostTransportParams {
   url: string;
   credentials?: RequestCredentials;
   getHeaders?():
@@ -73,7 +73,7 @@ export function rpcClient<TService extends {}, TMeta = undefined>(options: RpcOp
 
 export class HttpPostTransport<TMeta = undefined> {
   constructor(
-    private options: HttpPostTransportParams,
+    protected options: HttpPostTransportParams,
   ) { }
 
   protected getVerb(method: string, params: any[], meta?: TMeta) {
