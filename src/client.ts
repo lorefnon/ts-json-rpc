@@ -11,12 +11,12 @@ export class RpcError extends Error {
   }
 }
 
-export interface Transport {
-  request: (method: string, params: any[]) => Promise<any>;
+export interface Transport<TMeta = undefined> {
+  request: (method: string, params: any[], meta?: TMeta) => Promise<any>;
 }
 
 export interface RpcOptions<TMeta = undefined> {
-  transport: Transport
+  transport: Transport<TMeta>
   meta?: TMeta
   onStart?: (meta?: TMeta) => void | Promise<void>
   onEnd?: (meta?: TMeta, error?: unknown) => void | Promise<void>
@@ -24,7 +24,7 @@ export interface RpcOptions<TMeta = undefined> {
   onError?: (meta?: TMeta, error?: unknown) => void | Promise<void>
 }
 
-type FetchOptions = {
+type HttpPostTransportParams = {
   url: string;
   credentials?: RequestCredentials;
   getHeaders?():
@@ -56,7 +56,7 @@ export function rpcClient<TService extends {}, TMeta = undefined>(options: RpcOp
         return async (...args: any) => {
           try {
             await options?.onStart?.(options.meta)
-            const res = await options.transport.request(prop.toString(), args);
+            const res = await options.transport.request(prop.toString(), args, options.meta);
             await options?.onSuccess?.(options.meta)
             await options?.onEnd?.(options.meta)
             return res
@@ -71,31 +71,49 @@ export function rpcClient<TService extends {}, TMeta = undefined>(options: RpcOp
   ) as PromisifyMethods<TService>;
 }
 
-export class HttpPostTransport {
+export class HttpPostTransport<TMeta = undefined> {
   constructor(
-    private options: FetchOptions,
-  ) {}
+    private options: HttpPostTransportParams,
+  ) { }
+
+  protected getVerb(method: string, params: any[], meta?: TMeta) {
+    return "POST";
+  }
+
+  protected getBody(method: string, params: any[], meta?: TMeta) {
+    const id = Date.now();
+    return JSON.stringify({
+      jsonrpc: "2.0",
+      id,
+      method,
+      params: removeTrailingUndefs(params),
+    });
+  }
+
+  protected getUrl(method: string, params: any[], meta?: TMeta) {
+    return this.options.url;
+  }
+
+  protected getCredentials(method: string, params: any[], meta?: TMeta) {
+    return this.options.credentials;
+  }
 
   async request(
     method: string,
-    params: any[]
+    params: any[],
+    meta?: TMeta
   ): Promise<any> {
-    const id = Date.now();
     const headers = await this.options.getHeaders?.() ?? {};
-    const res = await fetch(this.options.url, {
-      method: "POST",
+    const url = this.getUrl(method, params, meta);
+    const res = await fetch(url, {
+      method: this.getVerb(method, params, meta),
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
         ...headers,
       },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id,
-        method,
-        params: removeTrailingUndefs(params),
-      }),
-      credentials: this.options.credentials,
+      body: this.getBody(method, params, meta),
+      credentials: this.getCredentials(method, params, meta),
     });
     if (!res.ok) {
       throw new RpcError(res.statusText, res.status);
