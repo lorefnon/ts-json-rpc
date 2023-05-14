@@ -8,6 +8,11 @@ export type ZServiceImpl<TSpec extends ZServiceSpec> = {
   [key in keyof TSpec]: Parameters<TSpec[key]["implement"]>[0]
 }
 
+export type ZServiceType<T> =
+  T extends ZService<infer TSpec>
+    ? ZServiceImpl<TSpec>
+    : never
+
 export class ZService<TSpec extends ZServiceSpec> {
   static define<TSpec extends ZServiceSpec>(spec: TSpec) {
     return new ZService(spec)
