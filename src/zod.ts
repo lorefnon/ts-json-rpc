@@ -1,13 +1,12 @@
 import * as z from "zod";
 
-interface ZServiceSpec {
+export interface ZServiceSpec {
   [key: string]: z.ZodFunction<z.AnyZodTuple, z.ZodTypeAny>
 }
 
-type ZServiceImpl<TSpec extends ZServiceSpec> = {
+export type ZServiceImpl<TSpec extends ZServiceSpec> = {
   [key in keyof TSpec]: Parameters<TSpec[key]["implement"]>[0]
 }
-
 
 export class ZService<TSpec extends ZServiceSpec> {
   static define<TSpec extends ZServiceSpec>(spec: TSpec) {
