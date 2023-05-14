@@ -12,7 +12,6 @@ that comes with the following features and non-features:
 - 🌎 Support for Deno and edge runtimes
 - 🚫 No code generation step
 - 🚫 No batch requests
-- 🚫 No runtime type-checking
 
 ## Basic Usage
 
@@ -40,7 +39,7 @@ Create a server with a route to handle the API requests:
 // server/index.ts
 
 import express from "express";
-import { rpcHandler } from "@lorefnon/ts-json-rpc/express";
+import { rpcHandler } from "@lorefnon/ts-json-rpc/lib/express";
 import { myService } from "./myService.ts";
 
 const app = express();
@@ -58,7 +57,7 @@ On the client-side, import the shared type and create a typed `rpcClient` with i
 ```ts
 // client/index.ts
 
-import { rpcClient, HttpPostTransport } from "@lorefnon/ts-json-rpc";
+import { rpcClient, HttpPostTransport } from "@lorefnon/ts-json-rpc/lib/client";
 
 // Import the type (not the implementation!)
 import type { MyService } from "../server/myService";
@@ -145,7 +144,7 @@ The generic `@lorefnon/ts-json-rpc/server` package can be used with any server f
 With [Fastify](https://www.fastify.io/), you would use `@lorefnon/ts-json-rpc` like this:
 
 ```ts
-import { handleRpc, isJsonRpcRequest } from "@lorefnon/ts-json-rpc/server";
+import { handleRpc, isJsonRpcRequest } from "@lorefnon/ts-json-rpc/lib/server";
 
 fastify.post("/api", async (req, reply) => {
   if (isJsonRpcRequest(req.body)) {
@@ -157,13 +156,42 @@ fastify.post("/api", async (req, reply) => {
 
 ## Runtime type checking
 
-> **Warning**
-> Keep in mind that `@lorefnon/ts-json-rpc` does not perform any runtime type checks.
+There is preliminary support for runtime type checking through zod.
 
-This is usually not an issue, as long as your service can handle this gracefully.
-If you want, you can use a library like [io-ts](https://gcanti.github.io/io-ts/)
-or [ts-runtime](https://fabiandev.github.io/ts-runtime/) to make sure that the
-arguments you receive match the expected type.
+```ts
+// shared/service.ts
+
+import { ZService } from "@lorefnon/ts-json-rpc/lib/zod"
+
+export const MyServiceDef = ZService.define({
+  hello: z.function()
+    .args(z.string())
+    .returns(z.string())
+})
+
+export type MyService = ZServiceType<typeof MyServiceDef> // { hello: (name: string) => string }
+```
+
+```ts
+// backend/service.ts
+import { MyServiceDef } from "<...>/shared/service.ts"
+
+const serviceFactory = MyServiceDef.implement(() => ({
+  hello(name) { // type of name is automatically inferred
+    return `Hello ${name}`;
+  }
+}))
+
+// Pass serviceFactory to rpcHandler
+```
+
+```ts
+// client/service.ts
+
+import { MyService } from "<...>/shared/service.ts"
+
+const myService = rpcClient<MyService>
+```
 
 ## React hooks
 
