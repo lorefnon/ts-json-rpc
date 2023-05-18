@@ -1,7 +1,7 @@
-import * as z from "zod";
-
 export interface ZServiceSpec {
-  [key: string]: z.ZodFunction<z.AnyZodTuple, z.ZodTypeAny>
+  [key: string]: {
+    implement: (...args: any) => void;
+  }
 }
 
 export type ZServiceImpl<TSpec extends ZServiceSpec> = {
@@ -14,14 +14,15 @@ export type ZServiceType<T> =
     : never
 
 export class ZService<TSpec extends ZServiceSpec> {
+
   static define<TSpec extends ZServiceSpec>(spec: TSpec) {
     return new ZService(spec)
   }
 
   private constructor(public spec: TSpec) {}
 
-  implement<TCtx extends {}>(factory: (ctx: TCtx) => ZServiceImpl<TSpec>) {
-    return this.partiallyImplement<TCtx, ZServiceImpl<TSpec>>(factory)
+  implement<TCtx extends {}, TImpl extends ZServiceImpl<TSpec>>(factory: (ctx: TCtx) => TImpl) {
+    return this.partiallyImplement<TCtx, TImpl>(factory)
   }
 
   partiallyImplement<TCtx extends {}, TImpl extends Partial<ZServiceImpl<TSpec>>>(factory: (ctx: TCtx) => TImpl) {
