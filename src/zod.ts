@@ -15,7 +15,10 @@ export type ZServiceType<T> =
 
 export class ZService<TSpec extends ZServiceSpec> {
 
-  static define<TSpec extends ZServiceSpec>(spec: TSpec) {
+  static define<TSpec extends ZServiceSpec>(specSource: TSpec | (() => TSpec)) {
+    const spec = typeof specSource === "function"
+      ? specSource()
+      : specSource;
     return new ZService(spec)
   }
 
