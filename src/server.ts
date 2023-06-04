@@ -80,6 +80,7 @@ function getRequestId(req: unknown) {
 export interface RpcHandlerOptions {
   getErrorCode?: (err: unknown) => number;
   getErrorMessage?: (err: unknown) => string;
+  isExposed?: (service: object, method: string) => boolean;
 }
 
 export async function handleRpc(
@@ -97,8 +98,8 @@ export async function handleRpc(
     };
   }
   const { jsonrpc, method, params } = request;
-  if (!hasMethod(service, method)) {
-    console.log("Method %s not found", method, service);
+  if (!hasMethod(service, method) || (options?.isExposed?.(service, method) === false)) {
+    console.log("Method %s not exposed from service", method, service);
     return {
       jsonrpc,
       id,
