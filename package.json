@@ -1,6 +1,6 @@
 {
   "name": "@lorefnon/ts-json-rpc",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
   "keywords": [
     "rpc",
@@ -21,7 +21,7 @@
     "Felix Gnass <fgnass@gmail.com>",
     "Lorefnon <lorefnon@tutanota.com> (https://lorefnon.me)"
   ],
-  "repository": "lorefnon/@lorefnon/ts-json-rpc",
+  "repository": "lorefnon/ts-json-rpc",
   "license": "MIT",
   "peerDependencies": {
     "zod": "^3.21.4"
