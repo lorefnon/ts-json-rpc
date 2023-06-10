@@ -45,6 +45,7 @@ export const DefaultServiceImpl = ServiceDef.implement(() => ({
   // Implement other methods...
 }));
 ```
+
 Create a server with a route to handle the API requests:
 
 ```ts
@@ -53,13 +54,14 @@ import { rpcHandler } from "@lorefnon/ts-json-rpc/lib/express";
 
 const app = express();
 app.use(express.json());
-app.post("/api", rpcHandler(DefaultServiceImpl()));
+app.post("/api", rpcHandler(DefaultServiceImpl));
 app.listen(3000);
 ```
 
 > **Note**
 > You can also use @lorefnon/ts-json-rpc in servers other than Express.
 > Check out to docs below for [examples](#support-for-other-runtimes).
+
 
 On the client-side, import the shared type and create a typed `rpcClient` with it:
 
@@ -88,40 +90,82 @@ That's all it takes to create a type-safe JSON-RPC API. 🎉
 
 You can play with a live example over at StackBlitz:
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/@lorefnon/ts-json-rpc-express?file=client%2Fmain.ts)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/typed-rpc-express-qeemgh?file=main.ts)
 
 # Advanced Usage
 
-## Accessing the request
+## Service factories vs singletons
 
-Sometimes it's necessary to access the request object inside the service. A common pattern is to define the service as `class` and create a new instance for each request:
+It is common for services to be created per request. `DefaultServiceImpl` in above example
+is a service factory ie. a function that creates and returns an implementation of the service contract.
+
+rpcHandler will invoke this function for every request to create a service object that handles that particular
+request.
+
+Alternatively, instead of a function you could also create an instance and pass that to rpcHandler:
 
 ```ts
-export class MyServiceImpl {
-  /**
-   * Create a new service instance for the given request headers.
-   */
-  constructor(private headers: Record<string, string | string[]>) {}
-
-  /**
-   * Echo the request header with the specified name.
-   */
-  async echoHeader(name: string) {
-    return this.headers[name.toLowerCase()];
-  }
-}
-
-export type MyService = typeof MyServiceImpl;
+app.post("/api", rpcHandler(DefaultServiceImpl({})));
 ```
 
-Then, in your server, pass a _function_ to `rpcHandler` that creates a service instance with the headers taken from the incoming request:
+Now, we have a singleton service that handles all requests.
+
+## Service context
+
+The function passed to `ServiceDef.implement` can accept a context argument which is available to all the methods.
+
+```ts
+interface ServiceContext {
+  currentUser?: { name: string }
+}
+
+export const DefaultServiceImpl = ServiceDef.implement((context: ServiceContext) => ({
+
+  async hello() {
+    return `Hello ${context.currentUser?.name ?? "Stranger"}!`;
+  },
+
+  // Implement other methods...
+}));
+```
+
+You are responsible for passing this `context` to `DefaultServiceImpl`.
+
+### Accessing the request
+
+Most common use case for context is to get access to the request object.
+
+So, by default rpcHandler will pass the request object to service factory.
+
+However, if you want to ensure that your service implementation is not tied to a specific server implementation (eg. express) you can also
+extract what you need from the request and pass it to the service factory.
 
 ```ts
 app.post(
   "/api",
-  rpcHandler((req) => new MyService(req.headers))
+  rpcHandler((req) => MyService(req.headers))
 );
 ```
+
+## Support for other runtimes
+
+The generic `@lorefnon/ts-json-rpc/server` package can be used with any server framework or (edge-) runtime.
+
+### Fastify
+
+With [Fastify](https://www.fastify.io/), you would use `@lorefnon/ts-json-rpc` like this:
+
+```ts
+import { handleRpc, isJsonRpcRequest } from "@lorefnon/ts-json-rpc/lib/server";
+
+fastify.post("/api", async (req, reply) => {
+  if (isJsonRpcRequest(req.body)) {
+    const res = await handleRpc(req.body, Service(req));
+    reply.send(res);
+  }
+});
+```
+
 
 ## Sending custom headers
 
@@ -144,64 +188,6 @@ const client = rpcClient<MyService>(apiUrl, {
 
 To include credentials in cross-origin requests, pass `credentials: 'include'` as option.
 
-## Support for other runtimes
-
-The generic `@lorefnon/ts-json-rpc/server` package can be used with any server framework or (edge-) runtime.
-
-### Fastify
-
-With [Fastify](https://www.fastify.io/), you would use `@lorefnon/ts-json-rpc` like this:
-
-```ts
-import { handleRpc, isJsonRpcRequest } from "@lorefnon/ts-json-rpc/lib/server";
-
-fastify.post("/api", async (req, reply) => {
-  if (isJsonRpcRequest(req.body)) {
-    const res = await handleRpc(req.body, new Service(req.headers));
-    reply.send(res);
-  }
-});
-```
-
-## Runtime type checking
-
-There is preliminary support for runtime type checking through zod.
-
-```ts
-// shared/service.ts
-
-import { ZService } from "@lorefnon/ts-json-rpc/lib/zod"
-
-export const MyServiceDef = ZService.define({
-  hello: z.function()
-    .args(z.string())
-    .returns(z.string())
-})
-
-export type MyService = ZServiceType<typeof MyServiceDef> // { hello: (name: string) => string }
-```
-
-```ts
-// backend/service.ts
-import { MyServiceDef } from "<...>/shared/service.ts"
-
-const serviceFactory = MyServiceDef.implement(() => ({
-  hello(name) { // type of name is automatically inferred
-    return `Hello ${name}`;
-  }
-}))
-
-// Pass serviceFactory to rpcHandler
-```
-
-```ts
-// client/service.ts
-
-import { MyService } from "<...>/shared/service.ts"
-
-const myService = rpcClient<MyService>
-```
-
 ## React hooks
 
 While `@lorefnon/ts-json-rpc` itself does not provide any built-in UI framework integrations,
@@ -211,3 +197,11 @@ a thin wrapper around _TanStack Query_. A type-safe match made in heaven. 💕
 # License
 
 MIT
+
+# Lineage
+
+This implementation is based on past work by [Felix Gnass](https://indieweb.social/@fgnass)
+in [typed-rpc](https://github.com/fgnass/typed-rpc).
+
+The typed-rpc repo is more minimal in its focus (eg. runtime type checking is explicitly not a goal)
+and does not appear to be accepting pull requests.
