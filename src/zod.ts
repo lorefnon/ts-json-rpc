@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export interface ZServiceSpec {
   [key: string]: {
     implement: (...args: any) => void;
@@ -10,8 +12,12 @@ export type ZServiceImpl<TSpec extends ZServiceSpec> = {
 
 export type ZServiceType<T> =
   T extends ZService<infer TSpec>
-    ? ZServiceImpl<TSpec>
-    : never
+  ? {
+    [key in keyof TSpec]: TSpec[key] extends z.ZodFunction<infer TArgs, infer TRes>
+      ? z.infer<z.ZodFunction<TArgs, TRes>>
+      : never
+  }
+  : never
 
 export class ZService<TSpec extends ZServiceSpec> {
 
@@ -22,7 +28,7 @@ export class ZService<TSpec extends ZServiceSpec> {
     return new ZService(spec)
   }
 
-  private constructor(public spec: TSpec) {}
+  private constructor(public spec: TSpec) { }
 
   implement<TCtx extends {}, TImpl extends ZServiceImpl<TSpec>>(factory: (ctx: TCtx) => TImpl) {
     return this.partiallyImplement<TCtx, TImpl>(factory)
@@ -34,7 +40,7 @@ export class ZService<TSpec extends ZServiceSpec> {
         .entries(factory(ctx))
         .map(([key, fn]) => {
           return [key, fn ? this.spec[key]?.implement(fn) : undefined]
-        })) as TImpl 
+        })) as TImpl
     }
   }
 }

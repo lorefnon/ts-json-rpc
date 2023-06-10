@@ -1,7 +1,7 @@
 import express from "express";
 import { rpcHandler } from "../express.js";
-import { service } from "./service.js";
-import { RequestAwareService } from "./RequestAwareService.js";
+import { RequestAwareServiceImpl } from "./RequestAwareServiceImpl.js";
+import { DefaultServiceImpl } from "./DefaultServiceImpl.js";
 
 const app = express();
 
@@ -13,16 +13,16 @@ app.use("/api", (req, res, next) => {
   else next();
 });
 
-app.post("/api", rpcHandler(service));
+app.post("/api", rpcHandler(DefaultServiceImpl));
 
 app.post(
   "/request-aware-api",
-  rpcHandler((req) => new RequestAwareService(req.headers))
+  rpcHandler((req) => RequestAwareServiceImpl(req.headers))
 );
 
 app.post(
   "/error-masked-api",
-  rpcHandler(service, {
+  rpcHandler(DefaultServiceImpl, {
     getErrorMessage: (error: unknown) => "Something went wrong",
     getErrorCode: (error: unknown) => 100
   })

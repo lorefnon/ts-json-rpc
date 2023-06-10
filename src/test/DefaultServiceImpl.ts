@@ -1,4 +1,6 @@
-export const service = {
+import { ServiceDef } from "./Service";
+
+export const DefaultServiceImpl = ServiceDef.implement(() => ({
   hello(name: string) {
     return `Hello ${name}!`;
   },
@@ -11,9 +13,7 @@ export const service = {
     throw new Error(`Sorry ${name}.`);
   },
 
-  echoHeader(name: string): string | string[] | undefined {
-    throw new Error("This service can't access request headers");
+  echoHeader(name: string): string {
+    throw new Error(`Not supported`);
   },
-};
-
-export type Service = typeof service;
+}));

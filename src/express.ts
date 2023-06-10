@@ -7,7 +7,10 @@ export interface ServiceFactory {
   (req: Request): object;
 }
 
-export function rpcHandler(serviceOrFactory: object | ServiceFactory, options?: RpcHandlerOptions): RequestHandler {
+export function rpcHandler(
+  serviceOrFactory: object | ServiceFactory,
+  options?: RpcHandlerOptions
+): RequestHandler {
   const handler: RequestHandler = (req, res, next) => {
     const service =
       typeof serviceOrFactory === "function"

@@ -1,50 +1,59 @@
 # ts-json-rpc
 
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/@lorefnon/ts-json-rpc)
-
 Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeScript projects
-that comes with the following features and non-features:
 
-- 👩‍🔧 Service definition via TypeScript types
+## Features:
+
+- 👩‍🔧 Service definition through Zod-based contracts
 - 📜 JSON-RPC 2.0 protocol
 - 🕵️ Full IDE autocompletion
 - 🪶 Tiny footprint (< 1kB)
 - 🌎 Support for Deno and edge runtimes
 - 🚫 No code generation step
-- 🚫 No batch requests
 
 ## Basic Usage
 
-Create a _service_ in your backend and export its type, so that the
-frontend can access type information:
+Define a shared service contract and export the type of service:
 
 ```ts
-// server/myService.ts
+import { z } from "zod";
+import type { ZServiceType } from "@lorefnon/ts-json-rpc/lib/zod";
+import { ZService } from "@lorefnon/ts-json-rpc/lib/zod";
 
-export const myService = {
-  hello(name: string) {
-    return `Hello ${name}!`;
-  },
-};
+export const MyServiceDef = ZService.define({
 
-export type MyService = typeof myService;
+  hello: z.function()
+    .args(z.string())
+    .returns(z.string().promise()),
+
+  // More methods here ...
+});
+
+export type MyService = ZServiceType<typeof MyServiceDef>
+// { hello: (arg: string) => Promise<string>, ... }
 ```
 
-> **Note**
-> Of course, the functions in your service can also be `async`.
+Define an implementation of this service:
 
+```ts
+export const DefaultServiceImpl = ServiceDef.implement(() => ({
+
+  async hello(name) { // name is inferred as string
+    return `Hello ${name}!`;
+  },
+
+  // Implement other methods...
+}));
+```
 Create a server with a route to handle the API requests:
 
 ```ts
-// server/index.ts
-
 import express from "express";
 import { rpcHandler } from "@lorefnon/ts-json-rpc/lib/express";
-import { myService } from "./myService.ts";
 
 const app = express();
 app.use(express.json());
-app.post("/api", rpcHandler(myService));
+app.post("/api", rpcHandler(DefaultServiceImpl()));
 app.listen(3000);
 ```
 

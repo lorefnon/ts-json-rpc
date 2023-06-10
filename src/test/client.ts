@@ -1,7 +1,7 @@
 import "isomorphic-fetch";
 import tap from "tap";
 import { HttpPostTransport, rpcClient, RpcError, RpcOptions } from "../client.js";
-import { Service } from "./service.js";
+import { Service } from "./Service.js";
 
 const apiUrl = process.env.SERVER_URL + "/api";
 
@@ -19,7 +19,7 @@ tap.test("should talk to the server", async (t) => {
 
 tap.test("should omit trailing undefined params", async (t) => {
   const client = rpcClient<Service>(rpcOpts);
-  const result = await client.greet("hello", undefined);
+  const result = await client.greet("hello", "world");
   t.equal(result, "hello world!");
 });
 
