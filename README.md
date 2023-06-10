@@ -33,10 +33,10 @@ export type MyService = ZServiceType<typeof MyServiceDef>
 // { hello: (arg: string) => Promise<string>, ... }
 ```
 
-Define an implementation of this service:
+Define a server-side implementation of this service:
 
 ```ts
-export const DefaultServiceImpl = ServiceDef.implement(() => ({
+export const MyServiceImpl = MyServiceDef.implement(() => ({
 
   async hello(name) { // name is inferred as string
     return `Hello ${name}!`;
@@ -54,7 +54,7 @@ import { rpcHandler } from "@lorefnon/ts-json-rpc/lib/express";
 
 const app = express();
 app.use(express.json());
-app.post("/api", rpcHandler(DefaultServiceImpl));
+app.post("/api", rpcHandler(MyServiceImpl));
 app.listen(3000);
 ```
 
@@ -66,12 +66,10 @@ app.listen(3000);
 On the client-side, import the shared type and create a typed `rpcClient` with it:
 
 ```ts
-// client/index.ts
-
 import { rpcClient, HttpPostTransport } from "@lorefnon/ts-json-rpc/lib/client";
 
 // Import the type (not the implementation!)
-import type { MyService } from "../server/myService";
+import type { MyService } from "../shared/MyService";
 
 // Create a typed client:
 const client = rpcClient<MyService>({
@@ -102,7 +100,8 @@ is a service factory ie. a function that creates and returns an implementation o
 rpcHandler will invoke this function for every request to create a service object that handles that particular
 request.
 
-Alternatively, instead of a function you could also create an instance and pass that to rpcHandler:
+This is convenient if you need to access the request (more on this below) but if you don't, instead of a function
+you could also create an instance and pass that to rpcHandler:
 
 ```ts
 app.post("/api", rpcHandler(DefaultServiceImpl({})));
@@ -119,7 +118,7 @@ interface ServiceContext {
   currentUser?: { name: string }
 }
 
-export const DefaultServiceImpl = ServiceDef.implement((context: ServiceContext) => ({
+export const MyServiceImpl = ServiceDef.implement((context: ServiceContext) => ({
 
   async hello() {
     return `Hello ${context.currentUser?.name ?? "Stranger"}!`;
@@ -135,7 +134,7 @@ You are responsible for passing this `context` to `DefaultServiceImpl`.
 
 Most common use case for context is to get access to the request object.
 
-So, by default rpcHandler will pass the request object to service factory.
+So, by default rpcHandler will simply pass the request object to service factory as context.
 
 However, if you want to ensure that your service implementation is not tied to a specific server implementation (eg. express) you can also
 extract what you need from the request and pass it to the service factory.
@@ -143,9 +142,11 @@ extract what you need from the request and pass it to the service factory.
 ```ts
 app.post(
   "/api",
-  rpcHandler((req) => MyService(req.headers))
+  rpcHandler((req) => MyServiceImpl(req.headers))
 );
 ```
+
+This is also useful if you need to inject any additional objects (eg. database pool instance) into the service.
 
 ## Support for other runtimes
 
