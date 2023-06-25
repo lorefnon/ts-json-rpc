@@ -14,33 +14,43 @@ export type ZServiceType<T> =
   T extends ZService<infer TSpec>
   ? {
     [key in keyof TSpec]: TSpec[key] extends z.ZodFunction<infer TArgs, infer TRes>
-      ? z.infer<z.ZodFunction<TArgs, TRes>>
-      : never
+    ? z.infer<z.ZodFunction<TArgs, TRes>>
+    : never
   }
   : never
 
 export class ZService<TSpec extends ZServiceSpec> {
 
-  static define<TSpec extends ZServiceSpec>(specSource: TSpec | (() => TSpec)) {
-    const spec = typeof specSource === "function"
-      ? specSource()
-      : specSource;
-    return new ZService(spec)
+  static define<TSpec extends ZServiceSpec>(
+    specSource: TSpec | (() => TSpec)
+  ) {
+    const getSpec = typeof specSource === "function"
+      ? specSource
+      : () => specSource;
+    return new ZService(getSpec)
   }
 
-  private constructor(public spec: TSpec) { }
+  private constructor(public getSpec: () => TSpec) { }
 
-  implement<TCtx extends {}, TImpl extends ZServiceImpl<TSpec>>(factory: (ctx: TCtx) => TImpl) {
+  implement<
+    TCtx extends {},
+    TImpl extends ZServiceImpl<TSpec>
+  >(factory: (ctx: TCtx) => TImpl) {
     return this.partiallyImplement<TCtx, TImpl>(factory)
   }
 
-  partiallyImplement<TCtx extends {}, TImpl extends Partial<ZServiceImpl<TSpec>>>(factory: (ctx: TCtx) => TImpl) {
+  partiallyImplement<
+    TCtx extends {},
+    TImpl extends Partial<ZServiceImpl<TSpec>>
+  >(factory: (ctx: TCtx) => TImpl) {
     return (ctx: TCtx) => {
-      return Object.fromEntries(Object
+      const spec = this.getSpec()
+      const entries = Object
         .entries(factory(ctx))
         .map(([key, fn]) => {
-          return [key, fn ? this.spec[key]?.implement(fn) : undefined]
-        })) as TImpl
+          return [key, fn ? spec[key]?.implement(fn) : undefined]
+        })
+      return Object.fromEntries(entries) as TImpl
     }
   }
 }
