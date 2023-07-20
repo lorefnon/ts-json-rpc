@@ -80,6 +80,7 @@ function getRequestId(req: unknown) {
 export interface RpcHandlerOptions {
   getErrorCode?: (err: unknown) => number;
   getErrorMessage?: (err: unknown) => string;
+  getErrorData?: (err: unknown) => any;
   isExposed?: (service: object, method: string) => boolean;
 }
 
@@ -116,6 +117,7 @@ export async function handleRpc(
       error: {
         code: (options?.getErrorCode ?? getErrorCode)(err),
         message: (options?.getErrorMessage ?? getErrorMessage)(err),
+        data: options?.getErrorData?.(err)
       },
     };
   }
