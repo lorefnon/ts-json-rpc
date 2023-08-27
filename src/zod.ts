@@ -48,7 +48,7 @@ export class ZService<TSpec extends ZServiceSpec> {
       const entries = Object
         .entries(factory(ctx))
         .map(([key, fn]) => {
-          return [key, fn ? spec[key]?.implement(fn) : undefined]
+          return [key, (fn && spec[key]) ? spec[key].implement(fn) : fn]
         })
       return Object.fromEntries(entries) as TImpl
     }
