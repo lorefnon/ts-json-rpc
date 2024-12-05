@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { Initor, initWith } from "./utils/function";
+import { mapEntries } from "./utils/object";
 
 export interface ZServiceSpec {
   [key: string]: {
@@ -40,22 +42,22 @@ export class ZService<TSpec extends ZServiceSpec> {
   implement<
     TCtx extends {},
     TImpl extends ZServiceSpecImpl<TSpec>
-  >(factory: (ctx: TCtx) => TImpl) {
-    return this.partiallyImplement<TCtx, TImpl>(factory)
+  >(init: Initor<[TCtx], TImpl>) {
+    return this.partiallyImplement<TCtx, TImpl>(init)
   }
 
   partiallyImplement<
     TCtx extends {},
     TImpl extends Partial<ZServiceSpecImpl<TSpec>>
-  >(factory: (ctx: TCtx) => TImpl) {
+  >(init: Initor<[TCtx], TImpl>) {
     return (ctx: TCtx) => {
       const spec = this.getSpec()
-      const entries = Object
-        .entries(factory(ctx))
-        .map(([key, fn]) => {
-          return [key, (fn && spec[key]) ? spec[key].implement(fn) : fn]
-        })
-      return Object.fromEntries(entries) as TImpl
+      const inst = initWith(init, [ctx]);
+      return mapEntries(spec, ([key, guard]) => {
+        const fn = inst[key];
+        if (typeof fn !== "function") return null;
+        return [key, guard.implement(fn.bind(inst))]
+      }) as TImpl
     }
   }
 }
