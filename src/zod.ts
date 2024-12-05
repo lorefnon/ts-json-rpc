@@ -6,7 +6,12 @@ export interface ZServiceSpec {
   }
 }
 
-export type ZServiceImpl<TSpec extends ZServiceSpec> = {
+export type ZServiceImpl<T> =
+  T extends ZService<infer TSpec>
+    ? ZServiceSpecImpl<TSpec>
+    : never
+
+export type ZServiceSpecImpl<TSpec extends ZServiceSpec> = {
   [key in keyof TSpec]: Parameters<TSpec[key]["implement"]>[0]
 }
 
@@ -34,14 +39,14 @@ export class ZService<TSpec extends ZServiceSpec> {
 
   implement<
     TCtx extends {},
-    TImpl extends ZServiceImpl<TSpec>
+    TImpl extends ZServiceSpecImpl<TSpec>
   >(factory: (ctx: TCtx) => TImpl) {
     return this.partiallyImplement<TCtx, TImpl>(factory)
   }
 
   partiallyImplement<
     TCtx extends {},
-    TImpl extends Partial<ZServiceImpl<TSpec>>
+    TImpl extends Partial<ZServiceSpecImpl<TSpec>>
   >(factory: (ctx: TCtx) => TImpl) {
     return (ctx: TCtx) => {
       const spec = this.getSpec()
