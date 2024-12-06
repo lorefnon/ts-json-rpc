@@ -50,14 +50,15 @@ export class ZService<TSpec extends ZServiceSpec> {
     TCtx extends {},
     TImpl extends Partial<ZServiceSpecImpl<TSpec>>
   >(init: Initor<[TCtx], TImpl>) {
-    return (ctx: TCtx) => {
-      const spec = this.getSpec()
-      const inst = initWith(init, [ctx]);
+    const getBase = (ctx: TCtx): TImpl => initWith(init, [ctx]); 
+    return Object.assign((ctx: TCtx) => {
+      const spec = this.getSpec();
+      const base = getBase(ctx);
       return mapEntries(spec, ([key, guard]) => {
-        const fn = inst[key];
+        const fn = base[key];
         if (typeof fn !== "function") return null;
-        return [key, guard.implement(fn.bind(inst))]
-      }) as TImpl
-    }
+        return [key, guard.implement(fn.bind(base))]
+      }) as Pick<TImpl, keyof TSpec>
+    }, { getBase })
   }
 }
