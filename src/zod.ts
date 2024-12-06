@@ -8,6 +8,15 @@ export interface ZServiceSpec {
   }
 }
 
+export interface ZServiceFactory<
+    TCtx extends object,
+    TImpl extends object,
+    TExposed extends object
+> {
+    getBase(ctx: TCtx): TImpl
+    (ctx: TCtx): TExposed
+}
+
 export type ZServiceImpl<T> =
   T extends ZService<infer TSpec>
     ? ZServiceSpecImpl<TSpec>
@@ -40,14 +49,14 @@ export class ZService<TSpec extends ZServiceSpec> {
   private constructor(public getSpec: () => TSpec) { }
 
   implement<
-    TCtx extends {},
+    TCtx extends object,
     TImpl extends ZServiceSpecImpl<TSpec>
-  >(init: Initor<[TCtx], TImpl>) {
+  >(init: Initor<[TCtx], TImpl>): ZServiceFactory<TCtx, TImpl, Pick<TImpl, keyof TSpec>> {
     return this.partiallyImplement<TCtx, TImpl>(init)
   }
 
   partiallyImplement<
-    TCtx extends {},
+    TCtx extends object,
     TImpl extends Partial<ZServiceSpecImpl<TSpec>>
   >(init: Initor<[TCtx], TImpl>) {
     const getBase = (ctx: TCtx): TImpl => initWith(init, [ctx]); 
