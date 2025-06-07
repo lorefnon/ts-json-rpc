@@ -3,9 +3,9 @@ import { Service, ServiceDef } from "./Service";
 /**
  * A `Service` implementation with access to the request headers.
  */
-export const RequestAwareServiceImpl = ServiceDef.implement((
+export const RequestAwareServiceImpl = ServiceDef.implement((ctx: {
   headers?: Record<string, string | string[] | undefined>
-) => ({
+}) => ({
   hello(name: string) {
     return `Hello ${name}!`;
   },
@@ -19,6 +19,6 @@ export const RequestAwareServiceImpl = ServiceDef.implement((
   },
 
   echoHeader(name: string) {
-    return headers?.[name.toLowerCase()];
+    return ctx.headers?.[name.toLowerCase()];
   }
 }))

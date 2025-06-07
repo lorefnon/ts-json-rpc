@@ -17,7 +17,7 @@ app.post("/api", rpcHandler(DefaultServiceImpl));
 
 app.post(
   "/request-aware-api",
-  rpcHandler((req) => RequestAwareServiceImpl(req.headers))
+  rpcHandler((req) => RequestAwareServiceImpl(req))
 );
 
 app.post(
