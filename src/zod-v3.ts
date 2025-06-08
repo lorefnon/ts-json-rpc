@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { Initor, initWith } from "./utils/function";
 import { mapEntries } from "./utils/object";
 
@@ -29,8 +29,8 @@ export type ZServiceSpecImpl<TSpec extends ZServiceSpec> = {
 export type ZServiceType<T> =
   T extends ZService<infer TSpec>
   ? {
-    [key in keyof TSpec]: TSpec[key] extends z.core.$ZodFunction
-    ? ReturnType<TSpec[key]["implementAsync"]>
+    [key in keyof TSpec]: TSpec[key] extends z.ZodFunction<infer TArgs, infer TRes>
+    ? z.infer<z.ZodFunction<TArgs, TRes>>
     : never
   }
   : never
@@ -66,9 +66,8 @@ export class ZService<TSpec extends ZServiceSpec> {
       return mapEntries(spec, ([key, guard]) => {
         const fn = base[key];
         if (typeof fn !== "function") return null;
-        return [key, guard.implementAsync(fn.bind(base))]
+        return [key, guard.implement(fn.bind(base))]
       }) as Pick<TImpl, keyof TSpec>
     }, { getBase })
   }
 }
-
