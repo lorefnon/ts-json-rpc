@@ -4,11 +4,9 @@ import { mapEntries } from "./utils/object";
 
 export interface ZServiceSpec {
   [key: string]: {
-    implement: (...args: any) => void;
+    implementAsync: (...args: any) => void;
   }
 }
-
-export type PromisifyReturn<T extends (...args: any[]) => any> = (...args: Parameters<T>) => Promise<ReturnType<T>>
 
 export interface ZServiceFactory<
     TCtx extends object,
@@ -25,7 +23,7 @@ export type ZServiceImpl<T> =
     : never
 
 export type ZServiceSpecImpl<TSpec extends ZServiceSpec> = {
-  [key in keyof TSpec]: Parameters<TSpec[key]["implement"]>[0]
+  [key in keyof TSpec]: Parameters<TSpec[key]["implementAsync"]>[0]
 }
 
 export type ZServiceType<T> =
