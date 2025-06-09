@@ -31,8 +31,14 @@ export type ZServiceSpecImpl<TSpec extends ZServiceSpec> = {
 export type ZServiceType<T> =
   T extends ZService<infer TSpec>
   ? {
-    [key in keyof TSpec]: TSpec[key] extends z.core.$ZodFunction
-    ? PromisifyReturn<ReturnType<TSpec[key]["implementAsync"]>>
+    [key in keyof TSpec]: TSpec[key] extends z.core.$ZodFunction<infer TArgs, infer TOut>
+    ? TArgs extends z.core.$ZodType<unknown, infer TIn> 
+	? TIn extends unknown[]
+	? TOut extends z.core.$ZodType<infer TOut, unknown>
+	? (...args: TIn) => Promise<TOut>
+	: never
+	: never
+	: never
     : never
   }
   : never
