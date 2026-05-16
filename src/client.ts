@@ -18,10 +18,10 @@ export interface Transport<TMeta = undefined> {
 export interface RpcOptions<TMeta = undefined> {
   transport: Transport<TMeta>
   meta?: TMeta
-  onStart?: (meta?: TMeta) => void | Promise<void>
-  onEnd?: (meta?: TMeta, error?: unknown) => void | Promise<void>
-  onSuccess?: (meta?: TMeta) => void | Promise<void>
-  onError?: (meta?: TMeta, error?: unknown) => void | Promise<void>
+  onStart?: (method: string, params: unknown[], meta?: TMeta) => void | Promise<void>
+  onEnd?: (method: string, params: unknown[], meta?: TMeta, result?: unknown, error?: unknown) => void | Promise<void>
+  onSuccess?: (method: string, params: unknown[], meta?: TMeta, result?: unknown) => void | Promise<void>
+  onError?: (method: string, params: unknown[], meta?: TMeta, error?: unknown) => void | Promise<void>
 }
 
 export interface HttpPostTransportParams {
@@ -54,15 +54,16 @@ export function rpcClient<TService extends {}, TMeta = undefined>(options: RpcOp
         if (prop in Object.prototype) return;
         if (prop === "toJSON") return;
         return async (...args: any) => {
+		  const method = prop.toString();
           try {
-            await options?.onStart?.(options.meta)
+            await options?.onStart?.(method, args, options.meta)
             const res = await options.transport.request(prop.toString(), args, options.meta);
-            await options?.onSuccess?.(options.meta)
-            await options?.onEnd?.(options.meta)
+            await options?.onSuccess?.(method, args, options.meta, res)
+            await options?.onEnd?.(method, args, options.meta, res, undefined)
             return res
           } catch (error: unknown) {
-            await options?.onError?.(options.meta, error)
-            await options?.onEnd?.(options.meta, error)
+            await options?.onError?.(method, args, options.meta, error)
+            await options?.onEnd?.(method, args, options.meta, undefined, error)
             throw error
           }
         }
